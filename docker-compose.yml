@@ -1,0 +1,37 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: fraud_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: fraud_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_data:/app/db
+    environment:
+      - DATABASE_URL=sqlite:////app/db/fraud_detection.db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: always
+
+  frontend:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: fraud_dashboard
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  backend_data:

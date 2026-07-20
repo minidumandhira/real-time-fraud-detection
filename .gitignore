@@ -1,0 +1,31 @@
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Large Datasets (>100MB - Kaggle dataset)
+data/creditcard.csv
+
+# Databases & Local state
+*.db
+fraud_detection.db
+
+# Node.js & Dashboard Build Outputs
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+dashboard/build/
+.npm
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
