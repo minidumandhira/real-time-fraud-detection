@@ -206,7 +206,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         manager.disconnect(websocket)
 
-def broadcast_tx_event(tx: Transaction, db: Session):
+async def broadcast_tx_event(tx: Transaction, db: Session):
     try:
         tx_dict = {
             "id": tx.id,
@@ -244,16 +244,12 @@ def broadcast_tx_event(tx: Transaction, db: Session):
             "stats": stats_dict
         }
 
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(manager.broadcast(event_payload))
-        except RuntimeError:
-            asyncio.run(manager.broadcast(event_payload))
+        await manager.broadcast(event_payload)
     except Exception as e:
         print(f"Broadcast error: {e}")
 
 @app.post("/predict", response_model=PredictionResponse)
-def predict_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
+async def predict_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
     global model, scaler
     
     # Preprocess and prepare features
@@ -331,7 +327,7 @@ def predict_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
     db.refresh(db_tx)
     
     # Broadcast transaction over WebSocket connection
-    broadcast_tx_event(db_tx, db)
+    await broadcast_tx_event(db_tx, db)
 
     is_fraud = pred_class == 1
     return PredictionResponse(
@@ -563,7 +559,7 @@ def get_statistics(db: Session = Depends(get_db)):
     )
 
 @app.post("/simulate", response_model=TransactionResponse)
-def simulate_transaction(fraud_probability: float = 0.05, db: Session = Depends(get_db)):
+async def simulate_transaction(fraud_probability: float = 0.05, db: Session = Depends(get_db)):
     """
     Simulates a live credit card transaction.
     Takes a fraud_probability (0.0 to 1.0) to decide whether to inject a fraud sample or a clean sample.
@@ -605,7 +601,7 @@ def simulate_transaction(fraud_probability: float = 0.05, db: Session = Depends(
         )
         
     # Perform prediction and database storage by calling the predict function
-    pred_res = predict_transaction(tx_data, db)
+    pred_res = await predict_transaction(tx_data, db)
     
     # Retrieve the latest saved transaction from database
     latest_tx = db.query(Transaction).order_by(Transaction.id.desc()).first()

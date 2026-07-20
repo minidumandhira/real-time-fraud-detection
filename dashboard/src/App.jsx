@@ -349,6 +349,16 @@ function App() {
     return closest.name;
   };
 
+  const formatTime = (ts) => {
+    if (!ts) return new Date().toLocaleTimeString();
+    try {
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? new Date().toLocaleTimeString() : d.toLocaleTimeString();
+    } catch (e) {
+      return new Date().toLocaleTimeString();
+    }
+  };
+
   return (
     <div className="dashboard-wrapper">
       {/* Real-time Overlay Screen Alert for Fraud */}
@@ -741,7 +751,7 @@ function App() {
                           <strong>Amount:</strong> {formatMoney(tx.amount)}<br />
                           <strong>Category:</strong> {tx.category}<br />
                           <strong>Probability:</strong> {(tx.predicted_probability * 100).toFixed(1)}%<br />
-                          <strong>Timestamp:</strong> {new Date(tx.timestamp).toLocaleTimeString()}
+                          <strong>Timestamp:</strong> {formatTime(tx.timestamp)}
                         </div>
                       </Popup>
                     </Marker>
@@ -791,7 +801,7 @@ function App() {
                       </div>
                       <div className="ticker-details">
                         <h5>{tx.merchant}</h5>
-                        <p>{tx.category} • 📍 {getCityName(tx)} • {new Date(tx.timestamp).toLocaleTimeString()}</p>
+                        <p>{tx.category} • 📍 {getCityName(tx)} • {formatTime(tx.timestamp)}</p>
                       </div>
                     </div>
                     
