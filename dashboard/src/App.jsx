@@ -1,37 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { 
-  MapContainer, 
-  TileLayer, 
-  Marker, 
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
   Popup,
-  useMap 
+  useMap
 } from 'react-leaflet';
 import L from 'leaflet';
-import { 
-  ShieldAlert, 
-  CheckCircle2, 
-  CreditCard, 
-  Percent, 
-  DollarSign, 
-  Play, 
-  Square, 
-  AlertTriangle, 
-  TrendingUp, 
-  MapPin, 
+import {
+  ShieldAlert,
+  CheckCircle2,
+  CreditCard,
+  Percent,
+  DollarSign,
+  Play,
+  Square,
+  AlertTriangle,
+  TrendingUp,
+  MapPin,
   Activity,
   X,
   Navigation
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  AreaChart, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
   Area,
   Cell
 } from 'recharts';
@@ -97,7 +97,7 @@ function App() {
   const [fraudProb, setFraudProb] = useState(0.15); // default 15% fraud probability in simulator
   const [systemStatus, setSystemStatus] = useState("Connecting...");
   const [alertTx, setAlertTx] = useState(null);
-  
+
   // Selection and navigation state
   const [focusedTx, setFocusedTx] = useState(null);
   const [detailModalTx, setDetailModalTx] = useState(null);
@@ -105,6 +105,17 @@ function App() {
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const markerRefs = useRef({});
   const tickerRefs = useRef({});
+  const pendingFraudAlertRef = useRef(null);
+
+  // Helper to handle modal closing and auto-focusing pending fraud alerts
+  const handleCloseModal = () => {
+    setDetailModalTx(null);
+    if (pendingFraudAlertRef.current) {
+      const nextTx = pendingFraudAlertRef.current;
+      pendingFraudAlertRef.current = null;
+      setFocusedTx(nextTx);
+    }
+  };
 
   // Fetch SHAP explanation when modal opens
   useEffect(() => {
@@ -123,7 +134,7 @@ function App() {
         });
     }
   }, [detailModalTx]);
-  
+
   const simulationRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -135,17 +146,17 @@ function App() {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          
+
           osc.type = 'sawtooth';
           osc.frequency.setValueAtTime(350, ctx.currentTime);
           osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
-          
+
           gain.gain.setValueAtTime(0.15, ctx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-          
+
           osc.connect(gain);
           gain.connect(ctx.destination);
-          
+
           osc.start();
           osc.stop(ctx.currentTime + 0.4);
         } catch (e) {
@@ -161,7 +172,7 @@ function App() {
       if (markerRefs.current[focusedTx.id]) {
         try {
           markerRefs.current[focusedTx.id].openPopup();
-        } catch (e) {}
+        } catch (e) { }
       }
       if (tickerRefs.current[focusedTx.id]) {
         try {
@@ -169,7 +180,7 @@ function App() {
             behavior: 'smooth',
             block: 'nearest'
           });
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }, [focusedTx]);
@@ -232,6 +243,7 @@ function App() {
               if (isFraud) {
                 audioRef.current.playAlert();
                 setAlertTx(newTx);
+                pendingFraudAlertRef.current = newTx;
                 setTimeout(() => setAlertTx(null), 4000);
               }
             }
@@ -269,19 +281,20 @@ function App() {
     try {
       const response = await axios.post(`${API_BASE_URL}/simulate?fraud_probability=${fraudProb}`);
       const newTx = response.data;
-      
+
       setTransactions(prev => {
         const filtered = prev.filter(t => t.id !== newTx.id);
         return [newTx, ...filtered].slice(0, 50);
       });
-      
+
       const statsRes = await axios.get(`${API_BASE_URL}/statistics`);
       setStats(statsRes.data);
-      
+
       const isFraud = Number(newTx.predicted_class) === 1 || newTx.is_fraud === true;
       if (isFraud) {
         audioRef.current.playAlert();
         setAlertTx(newTx);
+        pendingFraudAlertRef.current = newTx;
         setTimeout(() => setAlertTx(null), 4000);
       }
     } catch (err) {
@@ -402,7 +415,7 @@ function App() {
 
       {/* Detailed Transaction Modal */}
       {detailModalTx && (
-        <div className="modal-backdrop" onClick={() => setDetailModalTx(null)}>
+        <div className="modal-backdrop" onClick={handleCloseModal}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-box">
@@ -412,11 +425,11 @@ function App() {
                 <div>
                   <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-main)' }}>{detailModalTx.merchant}</h3>
                   <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Transaction ID: #{detailModalTx.id} • {new Date(detailModalTx.timestamp).toLocaleString()}
+                    Transaction ID: #{detailModalTx.id} • {formatTime(detailModalTx.timestamp)}
                   </p>
                 </div>
               </div>
-              <button className="modal-close-btn" onClick={() => setDetailModalTx(null)}>
+              <button className="modal-close-btn" onClick={handleCloseModal}>
                 <X size={18} />
               </button>
             </div>
@@ -429,16 +442,16 @@ function App() {
                   <strong style={{ fontSize: '14px' }}>{(detailModalTx.predicted_probability * 100).toFixed(1)}% Risk Score</strong>
                 </div>
                 <div className="risk-bar-track">
-                  <div 
-                    className="risk-bar-fill" 
-                    style={{ 
+                  <div
+                    className="risk-bar-fill"
+                    style={{
                       width: `${(detailModalTx.predicted_probability * 100).toFixed(1)}%`,
                       background: detailModalTx.predicted_class === 1 ? 'linear-gradient(90deg, #f59e0b, #ef4444)' : 'linear-gradient(90deg, #3b82f6, #10b981)'
                     }}
                   />
                 </div>
                 <p className="risk-description">
-                  {detailModalTx.predicted_class === 1 
+                  {detailModalTx.predicted_class === 1
                     ? "⚠️ High probability of fraudulent behavior detected based on transaction velocity and feature anomalies."
                     : "✅ Standard legitimate transaction pattern verified by machine learning model."}
                 </p>
@@ -542,9 +555,9 @@ function App() {
                           />
                           <Bar dataKey="contribution_pct" radius={[0, 4, 4, 0]} maxBarSize={20}>
                             {explanationData.top_features.map((entry, index) => (
-                              <Cell 
-                                key={`cell-${index}`} 
-                                fill={entry.impact === 'increase_risk' ? 'var(--color-danger)' : 'var(--color-success)'} 
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={entry.impact === 'increase_risk' ? 'var(--color-danger)' : 'var(--color-success)'}
                               />
                             ))}
                           </Bar>
@@ -575,19 +588,20 @@ function App() {
             </div>
 
             <div className="modal-footer">
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={() => {
-                  setFocusedTx(detailModalTx);
-                  setDetailModalTx(null);
+                  const txToFocus = detailModalTx;
+                  handleCloseModal();
+                  if (txToFocus) setFocusedTx(txToFocus);
                 }}
               >
                 <Navigation size={14} />
                 Focus & Zoom on Map
               </button>
-              <button 
+              <button
                 className="btn btn-secondary"
-                onClick={() => setDetailModalTx(null)}
+                onClick={handleCloseModal}
               >
                 Close
               </button>
@@ -610,19 +624,19 @@ function App() {
           <div className="simulation-panel">
             <div className="prob-slider">
               <span>Simulated Fraud Rate:</span>
-              <input 
-                type="range" 
-                min="0.01" 
-                max="0.5" 
-                step="0.01" 
-                value={fraudProb} 
-                onChange={(e) => setFraudProb(parseFloat(e.target.value))} 
+              <input
+                type="range"
+                min="0.01"
+                max="0.5"
+                step="0.01"
+                value={fraudProb}
+                onChange={(e) => setFraudProb(parseFloat(e.target.value))}
               />
               <span style={{ fontWeight: '700', color: 'var(--color-primary)' }}>{(fraudProb * 100).toFixed(0)}%</span>
             </div>
-            
-            <button 
-              className={`btn ${isSimulating ? 'btn-stop' : 'btn-primary'}`} 
+
+            <button
+              className={`btn ${isSimulating ? 'btn-stop' : 'btn-primary'}`}
               onClick={toggleSimulation}
             >
               {isSimulating ? (
@@ -718,11 +732,11 @@ function App() {
             </h3>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Real-time location visualization</span>
           </div>
-          
+
           <div className="map-container">
-            <MapContainer 
-              center={[37.0902, -95.7129]} 
-              zoom={4} 
+            <MapContainer
+              center={[37.0902, -95.7129]}
+              zoom={4}
               scrollWheelZoom={true}
               style={{ height: "100%", width: "100%" }}
             >
@@ -731,7 +745,7 @@ function App() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               />
-              
+
               {/* Plot transactions */}
               {transactions
                 .filter(tx => tx.location_lat && tx.location_lon)
@@ -739,7 +753,7 @@ function App() {
                 .map((tx) => {
                   const isFraud = Number(tx.predicted_class) === 1 || tx.is_fraud === true;
                   return (
-                    <Marker 
+                    <Marker
                       key={tx.id}
                       ref={(ref) => {
                         if (ref) {
@@ -800,8 +814,8 @@ function App() {
                 const isFraud = Number(tx.predicted_class) === 1 || tx.is_fraud === true;
                 const isFocused = focusedTx?.id === tx.id;
                 return (
-                  <div 
-                    key={tx.id} 
+                  <div
+                    key={tx.id}
                     ref={(el) => {
                       if (el) tickerRefs.current[tx.id] = el;
                     }}
@@ -824,7 +838,7 @@ function App() {
                         <p>{tx.category} • 📍 {getCityName(tx)} • {formatTime(tx.timestamp)}</p>
                       </div>
                     </div>
-                    
+
                     <div className="ticker-item-right">
                       <div className="ticker-amount" style={{
                         color: isFraud ? 'var(--color-danger)' : 'var(--text-main)'
@@ -863,7 +877,7 @@ function App() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                   <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
                   <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ background: '#0d1326', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}
                     labelStyle={{ color: 'white', fontWeight: 700 }}
                   />
@@ -888,14 +902,14 @@ function App() {
                 <AreaChart data={hourlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorAlerts" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-danger)" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="var(--color-danger)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="var(--color-danger)" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="var(--color-danger)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                   <XAxis dataKey="hour" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
                   <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ background: '#0d1326', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}
                     labelStyle={{ color: 'white', fontWeight: 700 }}
                   />
