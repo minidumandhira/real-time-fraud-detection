@@ -210,8 +210,8 @@ function App() {
             if (data.type === "NEW_TRANSACTION") {
               const newTx = data.transaction;
               setTransactions(prev => {
-                if (prev.some(t => t.id === newTx.id)) return prev;
-                return [newTx, ...prev.slice(0, 49)];
+                const filtered = prev.filter(t => t.id !== newTx.id);
+                return [newTx, ...filtered].slice(0, 50);
               });
               if (data.stats) {
                 setStats(prev => ({
@@ -219,7 +219,8 @@ function App() {
                   ...data.stats
                 }));
               }
-              if (newTx.predicted_class === 1) {
+              const isFraud = Number(newTx.predicted_class) === 1 || newTx.is_fraud === true;
+              if (isFraud) {
                 audioRef.current.playAlert();
                 setAlertTx(newTx);
                 setTimeout(() => setAlertTx(null), 4000);
@@ -260,12 +261,16 @@ function App() {
       const response = await axios.post(`${API_BASE_URL}/simulate?fraud_probability=${fraudProb}`);
       const newTx = response.data;
       
-      setTransactions(prev => [newTx, ...prev.slice(0, 49)]);
+      setTransactions(prev => {
+        const filtered = prev.filter(t => t.id !== newTx.id);
+        return [newTx, ...filtered].slice(0, 50);
+      });
       
       const statsRes = await axios.get(`${API_BASE_URL}/statistics`);
       setStats(statsRes.data);
       
-      if (newTx.predicted_class === 1) {
+      const isFraud = Number(newTx.predicted_class) === 1 || newTx.is_fraud === true;
+      if (isFraud) {
         audioRef.current.playAlert();
         setAlertTx(newTx);
         setTimeout(() => setAlertTx(null), 4000);
@@ -713,7 +718,7 @@ function App() {
                 .filter(tx => tx.location_lat && tx.location_lon)
                 .slice(0, 35)
                 .map((tx) => {
-                  const isFraud = tx.predicted_class === 1;
+                  const isFraud = Number(tx.predicted_class) === 1 || tx.is_fraud === true;
                   return (
                     <Marker 
                       key={tx.id}
@@ -765,7 +770,7 @@ function App() {
               </div>
             ) : (
               transactions.map((tx) => {
-                const isFraud = tx.predicted_class === 1;
+                const isFraud = Number(tx.predicted_class) === 1 || tx.is_fraud === true;
                 const isFocused = focusedTx?.id === tx.id;
                 return (
                   <div 

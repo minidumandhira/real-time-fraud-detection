@@ -352,8 +352,8 @@ def get_transactions(
     if predicted_class is not None:
         query = query.filter(Transaction.predicted_class == predicted_class)
     
-    # Return latest transactions first
-    transactions = query.order_by(Transaction.timestamp.desc()).offset(skip).limit(limit).all()
+    # Return latest transactions first by ID
+    transactions = query.order_by(Transaction.id.desc()).offset(skip).limit(limit).all()
     return transactions
 
 def compute_transaction_explanation(db_tx: Transaction) -> ExplanationResponse:
