@@ -4,19 +4,19 @@ Full-stack real-time Credit Card Fraud Detection System combining Machine Learni
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 - **Real-Time Fraud Classification**: Machine learning model classifies incoming transactions in real time with high F1-Score (82.46%) and ROC-AUC (0.977).
-- **🧠 SHAP Explainable AI (XAI)**: Detailed feature attribution score breakdown per transaction, explaining exactly *why* a transaction was flagged (e.g., V14 anomaly, velocity spike, transaction amount).
-- **⚡ Real-Time WebSocket & Redis Streaming**: Low-latency event streaming (`/ws/transactions`) pushes incoming transactions to all connected dashboard clients instantly (< 10 ms).
-- **🗺️ Interactive Geographic Fraud Map**: Leaflet map plots transaction locations with clean dots for legitimate transactions and pulsing radar rings for fraud alerts.
-- **🎯 Interactive Ticker & Map Directing**: Double-clicking any item in the Live Ticker smoothly flies the map to that transaction's exact location coordinates.
-- **🔍 Transaction Inspection & Explanation Modal**: Double-clicking a transaction opens a full breakdown displaying the ML risk confidence bar, SHAP feature impact breakdown, merchant details, category, city location, and coordinates.
-- **🐳 Multi-Container Docker Support**: Docker Compose configuration bundling Redis, FastAPI backend, and React dashboard.
+- ** SHAP Explainable AI (XAI)**: Detailed feature attribution score breakdown per transaction, explaining exactly *why* a transaction was flagged (e.g., V14 anomaly, velocity spike, transaction amount).
+- ** Real-Time WebSocket & Redis Streaming**: Low-latency event streaming (`/ws/transactions`) pushes incoming transactions to all connected dashboard clients instantly (< 10 ms).
+- **Interactive Geographic Fraud Map**: Leaflet map plots transaction locations with clean dots for legitimate transactions and pulsing radar rings for fraud alerts.
+- ** Interactive Ticker & Map Directing**: Double-clicking any item in the Live Ticker smoothly flies the map to that transaction's exact location coordinates.
+- ** Transaction Inspection & Explanation Modal**: Double-clicking a transaction opens a full breakdown displaying the ML risk confidence bar, SHAP feature impact breakdown, merchant details, category, city location, and coordinates.
+- ** Multi-Container Docker Support**: Docker Compose configuration bundling Redis, FastAPI backend, and React dashboard.
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```text
 Transaction Stream ──► FastAPI API / WebSockets ──► RobustScaler + ML Model ──► SHAP Explainer ──► SQLite DB ──► WebSocket Broadcast ──► React Dashboard
@@ -26,7 +26,7 @@ Transaction Stream ──► FastAPI API / WebSockets ──► RobustScaler + M
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Frontend (Dashboard)
 - **React 19 + Vite**
@@ -52,7 +52,7 @@ Transaction Stream ──► FastAPI API / WebSockets ──► RobustScaler + M
 
 ---
 
-## 📊 Model Performance
+##  Model Performance
 
 | Metric | Value |
 | :--- | :--- |
@@ -66,7 +66,7 @@ Transaction Stream ──► FastAPI API / WebSockets ──► RobustScaler + M
 
 ---
 
-## 🔌 API Reference Endpoints
+##  API Reference Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -80,7 +80,7 @@ Transaction Stream ──► FastAPI API / WebSockets ──► RobustScaler + M
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Option A: Using Docker Compose (Recommended)
 ```bash
@@ -109,7 +109,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```text
 FRAUD detection/
