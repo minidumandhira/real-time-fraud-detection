@@ -354,6 +354,12 @@ body {
   animation: pulse-red-border 1.5s infinite;
 }
 
+.ticker-item.active-focused {
+  border-color: var(--color-primary) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+}
+
 .ticker-item-left {
   display: flex;
   align-items: center;

@@ -104,6 +104,7 @@ function App() {
   const [explanationData, setExplanationData] = useState(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const markerRefs = useRef({});
+  const tickerRefs = useRef({});
 
   // Fetch SHAP explanation when modal opens
   useEffect(() => {
@@ -154,13 +155,21 @@ function App() {
     };
   }, []);
 
-  // Open marker popup automatically when focused transaction changes
+  // Open marker popup and scroll ticker item into view when focused transaction changes
   useEffect(() => {
-    if (focusedTx && markerRefs.current[focusedTx.id]) {
-      try {
-        markerRefs.current[focusedTx.id].openPopup();
-      } catch (e) {
-        // Marker might not be rendered yet
+    if (focusedTx) {
+      if (markerRefs.current[focusedTx.id]) {
+        try {
+          markerRefs.current[focusedTx.id].openPopup();
+        } catch (e) {}
+      }
+      if (tickerRefs.current[focusedTx.id]) {
+        try {
+          tickerRefs.current[focusedTx.id].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+          });
+        } catch (e) {}
       }
     }
   }, [focusedTx]);
@@ -739,6 +748,14 @@ function App() {
                       }}
                       position={[tx.location_lat, tx.location_lon]}
                       icon={isFraud ? createFraudMarker() : createCleanMarker()}
+                      eventHandlers={{
+                        click: () => {
+                          setFocusedTx(tx);
+                        },
+                        dblclick: () => {
+                          handleSelectTx(tx);
+                        }
+                      }}
                     >
                       <Popup>
                         <div style={{ color: '#0f172a', fontFamily: 'sans-serif', fontSize: '12px' }}>
@@ -785,6 +802,9 @@ function App() {
                 return (
                   <div 
                     key={tx.id} 
+                    ref={(el) => {
+                      if (el) tickerRefs.current[tx.id] = el;
+                    }}
                     className={`ticker-item ${isFraud ? 'fraud-alert' : ''} ${isFocused ? 'active-focused' : ''}`}
                     onClick={() => setFocusedTx(tx)}
                     onDoubleClick={() => handleSelectTx(tx)}
